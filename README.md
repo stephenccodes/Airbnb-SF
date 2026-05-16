@@ -29,7 +29,7 @@ The cleaned version of these data files can be found in the `data` folder in thi
  
 ```
 .
-├── airbnb_data.qmd        # Data cleaning notebook and results import
+├── airbnb_data.qmd     
 ├── data/
 │   ├── raw/               # Original Inside Airbnb CSVs (gitignored)
 │   └── clean/             # Normalized tables + SQL query results
