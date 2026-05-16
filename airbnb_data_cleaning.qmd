@@ -1,26 +1,8 @@
 ---
-title: "Airbnb data cleaning"
-author: "Stephen Carroll"
-format: html
-editor: visual
+output: html_document
 editor_options: 
   chunk_output_type: console
 ---
-
-```{r}
-# Load libraries needed for data cleaning
-library(tidyverse)
-library(janitor)
-library(dbplyr)
-library(purrr)
-
-# Read in raw AirBnB data
-listings <- read.csv("data/raw/listings.csv")
-reviews <- read.csv("data/raw/reviews.csv")
-neighbourhoods <- read.csv("data/raw/neighbourhoods.csv") # Preserved the British spelling for consistency
-# calendar <- read.csv("data/raw/calendar.csv") # Decided this data wasn't essential to the analysis
-```
-
 ## Listing
 
 ```{r}
@@ -31,7 +13,9 @@ listing_sf <- listings %>%
     listing_id = id, 
     listing_name = name,
     host_id,
-    host_name) 
+    host_name) %>%
+  mutate(
+    listing_id = as.numeric(listing_id) ) # Coerce into numeric data
 
 # Save the result to it's own file
 write_csv(listing_sf, "data/clean/sf_listing.csv")
@@ -50,7 +34,7 @@ host_sf <- listings %>%
     acceptance_rate = host_acceptance_rate,
     response_rate = host_response_rate,
     response_time = host_response_time,
-    location = host_location, # This column lists the location of the Host, not an Airbnb
+    location = host_location,
     listings_count = host_total_listings_count,
     profile_pic = host_has_profile_pic,
     id_verified = host_identity_verified
@@ -68,6 +52,25 @@ host_sf <- listings %>%
 
 write_csv(host_sf, "data/clean/sf_host.csv")
 ```
+
+
+```{r}
+
+
+
+cols <- c("superhost", "profile_pic", "id_verified")
+
+# Option A: just the unique values
+listings %>%
+  select(all_of(cols)) %>%
+  map(~ unique(.x))
+
+# Option B: unique values *with counts* (more informative — shows blanks too)
+host_sf %>%
+  select(all_of(cols)) %>%
+  map(~ count(tibble(value = .x), value, sort = TRUE))
+```
+
 
 ## Neighbourhood
 
@@ -90,7 +93,7 @@ write_csv(neighbourhood_sf, "data/clean/sf_neighbourhood.csv")
 # reviews_sf <- reviews %>%
 #   select(
 #     listing_id,
-#     review_id = id,
+#     review_id     = id,
 #     date,
 #     reviewer_id,
 #     reviewer_name,
@@ -101,15 +104,3 @@ write_csv(neighbourhood_sf, "data/clean/sf_neighbourhood.csv")
 # 
 # write_csv(reviews_sf, "data/clean/sf_reviews.csv")
 ```
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,0 +1,121 @@
+---
+title: "Airbnb Data Visualization"
+author: "Stephen Carroll"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(DBI)
+library(dbplyr)
+library(duckdb)
+library(purrr)
+
+# Establish a connection with the database
+conn <- DBI::dbConnect(duckdb::duckdb(),
+                       dbdir = "airbnb_database.duckdb")
+
+DBI::dbListTables(conn)
+```
+
+
+```{r}
+# Assign my query to a variable
+query <- readLines("project-query.sql") |> paste(collapse = "\n")
+
+# Apply query to database and extract results
+best_sf <- dbGetQuery(conn, query)
+
+# Save query results as a csv
+write.csv(best_sf, "data/clean/best_sf.csv")
+```
+
+```{r}
+# Make a theme for our charts
+theme_sf <- theme_minimal(base_family = "serif") +
+  theme(
+    plot.background = element_rect(fill = "#0f1117", color = NA),
+    panel.background = element_rect(fill = "#0f1117", color = NA),
+    panel.grid.major = element_line(color = "#1e2130"),
+    panel.grid.minor = element_blank(),
+    text = element_text(color = "#c8ccd8"),
+    axis.text = element_text(color = "#8b8fa8", size = 12),
+    plot.title = element_text(color = "#e8eaf0", size = 14, face = "bold", margin = margin(b = 4)),
+    plot.subtitle = element_text(color = "#8b8fa8", size = 9,  margin = margin(b = 12)),
+    plot.caption = element_text(color = "#555970", size = 7,  margin = margin(t = 10)),
+    plot.margin = margin(16, 20, 12, 16)
+  )
+```
+
+```{r}
+# Plot 1 - Superhost % by neighbourhood lollipop chart
+p1 <- best_sf %>%
+  mutate(neighbourhood = fct_reorder(neighbourhood, superhost_pct)) %>%
+  ggplot(aes(x = superhost_pct, y = neighbourhood)) +
+  geom_segment(aes(x = 0, xend = superhost_pct, yend = neighbourhood),
+               color = "#1e2130", linewidth = 0.6) +
+  geom_point(aes(size = total_listings), color = "#f5a623") +
+  scale_size_continuous(range = c(2, 7), name = "Total listings") +
+  scale_x_continuous(labels = function(x) paste0(x, "%"), limits = c(0, 105)) +
+  labs(
+    title = "Superhost Concentration by Neighbourhood",
+    subtitle = "Dot size = total listings",
+    x  = "% of listings with superhost status",
+    y  = NULL,
+    caption = "Source: Airbnb San Francisco"
+  ) +
+  theme_sf +
+  theme(legend.background = element_rect(fill = "#0f1117", color = NA),
+        legend.text        = element_text(color = "#8b8fa8", size = 7),
+        legend.title       = element_text(color = "#8b8fa8", size = 7))
+ 
+ggsave("images/plot1.png", p1,
+       width = 9, height = 8, dpi = 180, bg = "#0f1117")
+```
+
+```{r}
+# Plot 2 - superhost vs non-superhost listings Stacked bar
+p2 <- best_sf %>%
+  mutate(
+    non_superhost = total_listings - superhost_listings,
+    neighbourhood = fct_reorder(neighbourhood, superhost_pct)
+  ) %>%
+  select(neighbourhood, superhost_listings, non_superhost) %>%
+  pivot_longer(-neighbourhood,
+               names_to = "type",
+               values_to = "count") %>%
+  mutate(type = recode(type,
+                       superhost_listings = "Superhost",
+                       non_superhost = "Standard")) %>%
+  ggplot(aes(x = count, y = neighbourhood, fill = type)) +
+  geom_col(width = 0.7) +
+  scale_fill_manual(values = c(Superhost = "#f5a623", Standard = "#2a3a5e"),
+                    name = NULL) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  labs(
+    title  = "Listing Volume by Neighbourhood & Host Type",
+    subtitle = "Ordered by superhost concentration (highest at top)",
+    x = "Number of listings",
+    y = NULL,
+    caption = "Source: Airbnb San Francisco"
+  ) +
+  theme_sf +
+  theme(legend.position = "top",
+        legend.background = element_rect(fill = "#0f1117", color = NA),
+        legend.text = element_text(color = "#8b8fa8", size = 8))
+ 
+ggsave("images/plot2.png", p2,
+       width = 9, height = 8, dpi = 180, bg = "#0f1117")
+```
+
+
+```{r}
+# Disconnect from the database
+dbDisconnect(conn)
+```
+
+
+

@@ -7,8 +7,8 @@ CREATE TABLE Host (
     response_time VARCHAR,                       
     location VARCHAR,                        
     listings_count DOUBLE,                        
-    profile_pic INTEGER,                       
-    id_verified INTEGER                        
+    profile_pic BOOLEAN,                       
+    id_verified BOOLEAN                        
 );
 
 COPY Host FROM 'data/clean/sf_host.csv' (header TRUE);           
@@ -18,7 +18,7 @@ CREATE TABLE Listing (
     listing_id  DOUBLE PRIMARY KEY,
     listing_name TEXT NOT NULL,
     host_id BIGINT NOT NULL REFERENCES Host(host_id),
-    host_name VARCHAR NOT NULL
+    host_name VARCHAR  
 );
 
 COPY Listing FROM 'data/clean/sf_listing.csv' (header TRUE);

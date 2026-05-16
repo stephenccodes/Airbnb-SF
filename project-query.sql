@@ -1,11 +1,11 @@
 --Which San Francisco neighborhoods have the most high-quality AirBnB hosts, defined by verified profiles, superhost status and high acceptance and response rates?
 
-SELECT Neighbourhood, 
+SELECT Neighbourhood.neighbourhood AS Neighbourhood, 
     COUNT(Listing.listing_id) AS total_listings, 
     COUNT(CASE WHEN Host.superhost THEN 1 END) AS superhost_listings, -- Count listings with superhost status
     ROUND(COUNT(CASE WHEN Host.superhost THEN 1 END) * 100 / COUNT(Listing.listing_id), 1) AS superhost_pct, -- Find % of neighbourhoods listings that are hosted by superhosts
-    ROUND(AVG(Host.acceptance_rate) * 100, 1) AS avg_acceptance_rate, -- Express acceptance rate as a %
-    ROUND(AVG(Host.response_rate) * 100, 1) AS avg_response_rate -- Express response rate as a %
+    ROUND(AVG(Host.acceptance_rate) * 100.0, 1) AS avg_acceptance_rate, -- Express acceptance rate as a %
+    ROUND(AVG(Host.response_rate) * 100.0, 1) AS avg_response_rate -- Express response rate as a %
 
 FROM Listing
     JOIN Host -- Connect Host data with the Listing data
@@ -16,4 +16,4 @@ FROM Listing
     AND Host.id_verified = TRUE -- Remove any unverified hosts
 
 GROUP BY Neighbourhood.neighbourhood -- Aggregate by neighbourhood
-    ORDER BY superhost_pct; -- Sort by highest percentage of superhost
+    ORDER BY superhost_pct DESC; -- Sort by highest percentage of superhost

@@ -11,7 +11,7 @@ San Francisco, California skyline. (Getty) ["https://www.kron4.com/wp-content/up
 
 This repository houses the files and associated analysis for a relational database project that explores Airbnb listings in San Francisco to identify which neighborhoods are home to the highest-quality hosts.
 
-The goal is to take raw, denormalized Airbnb data, restructure it into a clean relational schema, and use SQL queries to reveal insights about host quality across San Francisco neighborhoods.
+The goal is to take raw, de-normalized Airbnb data, restructure it into a clean relational schema, and use SQL queries to reveal insights about host quality across San Francisco neighborhoods.
 
 
 ## Data Sources
@@ -25,6 +25,18 @@ Raw data is sourced from [Inside Airbnb](http://insideairbnb.com/get-the-data.ht
 
 The cleaned version of these data files can be found in the `data` folder in this repository.
 
+The resulting database is hosted in this repository, `airbnb_database.duckdb`
+
+
+## Reproducability
+
+To duplicate results of this analysis:
+
+- Run all cells in `airbnb_data.qmd`
+- Run all cells in `lab_project_data_viz.qmd`
+
+The initial results of my query are stored in `best_sf.csv`
+
 ## Repository Structure
  
 ```
@@ -33,10 +45,14 @@ The cleaned version of these data files can be found in the `data` folder in thi
 ├── data/
 │   ├── raw/               # Original Inside Airbnb CSVs (gitignored)
 │   └── clean/             # Normalized tables + SQL query results
-├──airbnb_database.duckdb
-├──lab_project.Rproj
-├──airbnb_schema.sql
-├──project-query.sql
+├── airbnb_database.duckdb
+├── images/
+│   ├── plot1.png            
+│   └── plot2.png 
+├── lab_project.Rproj
+├── airbnb_schema.sql
+├── project-query.sql
+├── dependencies.txt
 ├── README.md
 └── .gitignore
 ```
