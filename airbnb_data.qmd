@@ -1,0 +1,125 @@
+---
+title: "eds213_lab"
+author: "Stephen Carroll"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# Load libraries needed for data cleaning
+library(tidyverse)
+library(janitor)
+library(dbplyr)
+library(purrr)
+
+# Read in raw AirBnB data
+listings <- read.csv("data/raw/listings.csv")
+reviews <- read.csv("data/raw/reviews.csv")
+neighbourhoods <- read.csv("data/raw/neighbourhoods.csv") #Preserved the British spelling for consistency
+# calendar <- read.csv("data/raw/calendar.csv") # Decided this data wasn't essential to the analysis
+```
+
+## Listing
+
+```{r}
+# Separate the columns from the largest CSV into those relevant to listings
+# Re-name columns for clarity
+listing_sf <- listings %>%
+  select(
+    listing_id = id, 
+    listing_name = name,
+    host_id,
+    host_name) %>%
+  mutate(
+    listing_id = as.numeric(listing_id) ) # Coerce into numeric data
+
+# Save the result to it's own file
+write_csv(listing_sf, "data/clean/sf_listing.csv")
+```
+
+## Host
+
+```{r}
+# Separate the columns from listings that are relevant to the hosts
+# Convert percentages to decimals, clear up NAs, resolve data type concerns
+host_sf <- listings %>%
+  select(
+    host_id,
+    host_name,
+    superhost = host_is_superhost, # Re-name columns for brevity 
+    acceptance_rate = host_acceptance_rate,
+    response_rate = host_response_rate,
+    response_time = host_response_time,
+    location = host_location,
+    listings_count = host_total_listings_count,
+    profile_pic = host_has_profile_pic,
+    id_verified = host_identity_verified
+  ) %>%
+  distinct(host_id, .keep_all = TRUE) %>% # One row per host
+  mutate(
+    acceptance_rate = as.numeric(str_remove(acceptance_rate, "%")) / 100, # Convert percentages to a decimal 
+    acceptance_rate = replace_na(acceptance_rate, 0), # Hosts without an acceptance rate will be treated as 0 because they are likely new and therefore not top-tier hosts
+    response_rate = as.numeric(str_remove(response_rate, "%")) / 100,
+    response_rate = replace_na(response_rate, 0), # Hosts without a response rate will be treated as 0 for reasons stated above
+    profile_pic = if_else(profile_pic == "", "f", profile_pic), # Convert blank fields to false
+    id_verified = if_else(id_verified == "", "f", id_verified),
+    listings_count = coalesce(as.numeric(listings_count),0) # This column needs to be numeric(we don't use it)
+  )
+
+write_csv(host_sf, "data/clean/sf_host.csv")
+```
+
+## Neighbourhood
+
+```{r}
+# Make a reference table with neighbourhoods
+neighbourhood_sf <- listings %>%
+  select(listing_id = id, neighbourhood_cleansed) %>% # Join on neighbourhood_cleansed (the standardized column in listings)
+  right_join(neighbourhoods, join_by(neighbourhood_cleansed == neighbourhood)) %>%
+  select(listing_id, neighbourhood = neighbourhood_cleansed) %>%
+  filter(!is.na(listing_id))  # Drop the neighbourhoods that have no matching listing
+
+write_csv(neighbourhood_sf, "data/clean/sf_neighbourhood.csv")
+```
+
+## Reviews
+
+```{r}
+# This section was ultimately not used in my analysis
+
+# reviews_sf <- reviews %>%
+#   select(
+#     listing_id,
+#     review_id = id,
+#     date,
+#     reviewer_id,
+#     reviewer_name,
+#     comments
+#   ) %>%
+#   mutate(date = as.Date(date))
+# 
+# 
+# write_csv(reviews_sf, "data/clean/sf_reviews.csv")
+```
+-------------------------------------------------------------------------
+
+## Import the SQL Query results
+
+```{r}
+# Import our query results
+best_sf <- read.csv("data/clean/best_sf.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
